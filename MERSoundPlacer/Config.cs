@@ -13,7 +13,7 @@ namespace MERSoundPlacer
         public bool Debug { get; set; } = true;
 
         [Description("Sound data.")]
-        public virtual List<SoundList> AudioPathing { get; set; } = new List<SoundList>
+        public List<SoundList> AudioPathing { get; set; } = new List<SoundList>
         {
             new()
         };

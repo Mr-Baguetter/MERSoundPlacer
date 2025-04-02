@@ -1,5 +1,6 @@
 ﻿using Exiled.API.Enums;
 using Exiled.API.Features;
+using MERSoundPlacer.API;
 using System;
 
 using MEREvent = MapEditorReborn.Events.Handlers.Schematic;
@@ -22,12 +23,19 @@ namespace MERSoundPlacer
         public override PluginPriority Priority => PluginPriority.First;
 
         internal API.API API;
+        internal AudioApi AudioApi;
 
         public static Plugin Instance { get; private set; }
 
         public override void OnEnabled()
         {
-            Instance = this;;
+
+            Instance = this;
+            API = new();
+            AudioApi = new();
+
+            AudioApi.SetSoundLists(Config.AudioPathing);
+            Log.Debug($"Initialized AudioApi with {Config.AudioPathing.Count} sound configurations");
 
             MEREvent.SchematicSpawned += API.OnSchematicSpawned;
 
@@ -43,6 +51,7 @@ namespace MERSoundPlacer
         {
             MEREvent.SchematicSpawned -= API.OnSchematicSpawned;
 
+            AudioApi = null;
             API = null;
             Instance = null;
             base.OnDisabled();

@@ -1,6 +1,9 @@
 ﻿using Exiled.API.Features;
 using Exiled.Loader;
+using MapEditorReborn.API.Features.Objects;
+using MERSoundPlacer.API.Data;
 using MERSoundPlacer.Interfaces;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -9,10 +12,13 @@ namespace MERSoundPlacer.API
 {
     public class AudioApi
     {
+        public List<SoundList> SoundLists { get; set; }
 
-        /// <summary>
-        /// If true it enables access to the custom sound custom flag.
-        /// </summary>
+        public void SetSoundLists(List<SoundList> soundLists)
+        {
+            SoundLists = soundLists ?? new List<SoundList>();
+            Log.Debug($"Set {SoundLists.Count} sound configurations in AudioApi");
+        }
         public bool EnableAudioApi { get; set; } = false;
         public AudioApi()
         {
@@ -36,38 +42,52 @@ namespace MERSoundPlacer.API
             return (float)((value < min) ? min : (value > max) ? max : value);
         }
 
-        ISoundList SoundList = Plugin.Instance.Config.AudioPathing as ISoundList;
-
-        public void PlayAudio()
+        public void PlayAudio(SchematicObject Schematic)
         {
-            GameObject primitive = GameObject.Find($"{SoundList.PrimitiveName}");
-            foreach (var PrimitiveName in SoundList.PrimitiveName)
+            if (SoundLists == null || SoundLists.Count == 0)
             {
-                if (primitive != null)
+                Log.Error("SoundLists is null or empty.");
+                return;
+            }
+
+            foreach (var SpawnedObject in Schematic.AttachedBlocks)
+            {
+                if (SpawnedObject == null)
+                    continue;
+
+                foreach (var soundList in SoundLists)
                 {
-                    if (EnableAudioApi != false)
+                    if (SpawnedObject.name == soundList.PrimitiveName)
                     {
-                        Log.Debug($"Audio API is enabled!");
-                        if (!string.IsNullOrEmpty(SoundList.AudioPath))
+                        if (EnableAudioApi)
                         {
-                            Vector3 Coords = primitive.transform.position;
-                            Log.Debug($"Succesfully loaded audio path {SoundList.AudioPath}");
-                            AudioPlayer audioPlayer = AudioPlayer.CreateOrGet($"Global_Audio_{SoundList.PrimitiveName}", onIntialCreation: (p) =>
+                            Log.Debug($"Audio API is enabled!");
+
+                            if (string.IsNullOrEmpty(soundList.AudioPath))
                             {
-                                Speaker speaker = p.AddSpeaker("Main", Coords, isSpatial: true, maxDistance: SoundList.AudibleDistance);
+                                Log.Error($"Audio path is null please fill out the config properly.");
+                                continue;
+                            }
+
+                            Vector3 Coords = SpawnedObject.transform.position;
+                            Log.Debug($"Successfully loaded audio path {soundList.AudioPath}");
+
+                            AudioPlayer audioPlayer = AudioPlayer.CreateOrGet($"Global_Audio_{soundList.PrimitiveName}", onIntialCreation: (p) =>
+                            {
+                                Speaker speaker = p.AddSpeaker("Main", Coords, isSpatial: true, maxDistance: soundList.AudibleDistance);
                             });
-                            float volume = Clamp(SoundList.SoundVolume, 1f, 100f);
-                            audioPlayer.AddClip($"sound_{SoundList.PrimitiveName}", volume);
-                            AudioClipStorage.LoadClip(SoundList.AudioPath, $"sound_{SoundList.PrimitiveName}");
-                            Log.Debug($"Playing {Path.GetFileName(SoundList.AudioPath)}");
+
+                            float volume = Clamp(soundList.SoundVolume, 1f, 100f);
+                            audioPlayer.AddClip($"sound_{soundList.PrimitiveName}", volume, soundList.Loop);
+                            AudioClipStorage.LoadClip(soundList.AudioPath, $"sound_{soundList.PrimitiveName}");
+
+                            Log.Debug($"Playing {Path.GetFileName(soundList.AudioPath)}");
                             Log.Debug($"Audio should have been played.");
                         }
                         else
-                            Log.Error($"Audio path is null please fill out the config properly.");
-                    }
-                    else
-                    {
-                        Log.Error("You don't have AudioPlayerApi or its dependency NVorbis installed!\nInstall it to use the custom sound custom flag.\nIf you need support join our Discord server: https://discord.gg/5StRGu8EJV");
+                        {
+                            Log.Error("You don't have AudioPlayerApi or its dependency NVorbis installed!");
+                        }
                     }
                 }
             }
