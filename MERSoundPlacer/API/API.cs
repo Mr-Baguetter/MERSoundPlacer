@@ -1,12 +1,19 @@
-﻿namespace MERSoundPlacer.API
+﻿using MapEditorReborn.Events.EventArgs;
+using System.Collections.Generic;
+
+namespace MERSoundPlacer.API
 {
     public class API
     {
-        public void OnRoundStarted()
+        
+
+        public void OnSchematicSpawned(SchematicSpawnedEventArgs ev)
         {
-            AudioApi AudioApi = new AudioApi();
+            if (ev.Schematic == null)
+                return;
+
+            AudioApi AudioApi = new();
             AudioApi.PlayAudio();
         }
-
     }
 }

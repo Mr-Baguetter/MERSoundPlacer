@@ -2,7 +2,7 @@
 using Exiled.API.Features;
 using System;
 
-using ServerEvent = Exiled.Events.Handlers.Server;
+using MEREvent = MapEditorReborn.Events.Handlers.Schematic;
 
 namespace MERSoundPlacer
 {
@@ -29,7 +29,7 @@ namespace MERSoundPlacer
         {
             Instance = this;;
 
-            ServerEvent.RoundStarted += API.OnRoundStarted;
+            MEREvent.SchematicSpawned += API.OnSchematicSpawned;
 
             Log.Info("===========================================");
             Log.Info("      Thanks for using MERSoundPlacer");
@@ -41,7 +41,7 @@ namespace MERSoundPlacer
 
         public override void OnDisabled()
         {
-            ServerEvent.RoundStarted -= API.OnRoundStarted;
+            MEREvent.SchematicSpawned -= API.OnSchematicSpawned;
 
             API = null;
             Instance = null;
